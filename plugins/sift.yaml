@@ -1,0 +1,71 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: sift
+spec:
+  version: v2.2.2
+  homepage: https://github.com/OpeyemiAdeniji/KubeSift
+  shortDescription: Link workload failures to the changes behind them
+  description: |
+    Finds what is broken in a cluster or namespace (crash loops, image pulls, OOM kills, pending pods,
+    Services without endpoints, RBAC and policy denials, failing probes, certificates and more), groups the
+    symptoms into incidents, links each one to the rollout, config edit or Helm/Argo CD sync that came just
+    before it, and prints the evidence, the likely fix and the kubectl commands to run.
+    Read-only by default; optional guarded fixes run a server-side dry run, ask first, then verify the
+    problem is gone. Works without an AI key. Optional AI explanations with Ollama, Anthropic or
+    OpenAI-compatible endpoints. Also lints manifests and checks upgrades.
+  caveats: |
+    Needs read access (get/list) to the objects it checks; a guarded fix also needs write access to the
+    resource it changes. The web dashboard and the MCP server for AI assistants are in the Python package
+    (kubesift[all] on PyPI), not in this plugin.
+  platforms:
+  - selector:
+      matchLabels:
+        os: linux
+        arch: amd64
+    uri: https://github.com/OpeyemiAdeniji/KubeSift/releases/download/v2.2.2/kubectl-sift_linux_amd64.tar.gz
+    sha256: "cd659603b04cffe0cb347215bcca2e3c03fcca2e8c71e7c9f430e3a698ea964d"
+    files:
+      - from: kubectl-sift/*
+        to: .
+    bin: kubectl-sift
+  - selector:
+      matchLabels:
+        os: linux
+        arch: arm64
+    uri: https://github.com/OpeyemiAdeniji/KubeSift/releases/download/v2.2.2/kubectl-sift_linux_arm64.tar.gz
+    sha256: "4a9835fcf6bcc4fa7afd4376d03fdb70d4c669cff2e0cc97b8123c43901750db"
+    files:
+      - from: kubectl-sift/*
+        to: .
+    bin: kubectl-sift
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: amd64
+    uri: https://github.com/OpeyemiAdeniji/KubeSift/releases/download/v2.2.2/kubectl-sift_darwin_amd64.tar.gz
+    sha256: "4835632c926d11ee4275cbd57493deb8dc236602699a772b6ebe083816dd403e"
+    files:
+      - from: kubectl-sift/*
+        to: .
+    bin: kubectl-sift
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: arm64
+    uri: https://github.com/OpeyemiAdeniji/KubeSift/releases/download/v2.2.2/kubectl-sift_darwin_arm64.tar.gz
+    sha256: "db6995b9dfa0ef3aef87b803724b6f148f2c255896bfb30729bb71e9b2718b91"
+    files:
+      - from: kubectl-sift/*
+        to: .
+    bin: kubectl-sift
+  - selector:
+      matchLabels:
+        os: windows
+        arch: amd64
+    uri: https://github.com/OpeyemiAdeniji/KubeSift/releases/download/v2.2.2/kubectl-sift_windows_amd64.zip
+    sha256: "96a6f98310b05fd619cde679716c429f9543a83b6d272fb32e78cf18d1ced2dc"
+    files:
+      - from: kubectl-sift/*
+        to: .
+    bin: kubectl-sift.exe

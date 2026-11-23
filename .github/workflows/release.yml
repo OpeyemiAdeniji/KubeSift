@@ -150,7 +150,7 @@ jobs:
           pattern: kubectl-sift-*
           merge-multiple: true
           path: dist
-      - name: Krew manifest for this release (submitted to krew-index, see docs/krew.md)
+      - name: Krew manifest for this release (see docs/krew.md)
         run: python3 scripts/krew_manifest.py "$GITHUB_REF_NAME" dist
       - run: gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag dist/kubectl-sift_* dist/sift.yaml
         env:
@@ -160,3 +160,20 @@ jobs:
           major="${GITHUB_REF_NAME%%.*}"
           git tag -f "$major" "$GITHUB_REF_NAME"
           git push -f origin "refs/tags/$major"
+      - name: Update the KubeSift krew index (plugins/sift.yaml on main)
+        # Users who ran `kubectl krew index add kubesift <this repo>` get the new version from `kubectl krew upgrade`.
+        # Only moves forward, so releasing an older patch line never downgrades the index.
+        run: |
+          git fetch origin main
+          git switch -C index-update origin/main
+          current=$(sed -n 's/^  version: //p' plugins/sift.yaml 2>/dev/null || true)
+          newest=$(printf '%s\n%s\n' "${current:-v0.0.0}" "$GITHUB_REF_NAME" | sort -V | tail -1)
+          if [ "$newest" != "$GITHUB_REF_NAME" ] || [ "$current" = "$GITHUB_REF_NAME" ]; then
+            echo "index has $current; not replacing it with $GITHUB_REF_NAME"; exit 0
+          fi
+          mkdir -p plugins && cp dist/sift.yaml plugins/sift.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add plugins/sift.yaml
+          git commit -m "krew index: sift $GITHUB_REF_NAME"
+          git push origin HEAD:main

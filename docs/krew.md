@@ -40,29 +40,33 @@ quarantined by Gatekeeper; `curl` downloads (and krew) are not. If you used a br
 
 ## Install with krew
 
-Once the plugin is in the krew index:
+KubeSift has its own krew index (this repository), so krew installs and upgrades it like any other plugin:
 
 ```bash
-kubectl krew install sift
+kubectl krew index add kubesift https://github.com/OpeyemiAdeniji/KubeSift.git
+kubectl krew install kubesift/sift
 kubectl sift diagnose
 ```
 
-Before that, any release can be installed with krew straight from its manifest:
+krew prints a notice that plugins from custom indexes are not reviewed by the krew team; that is expected for
+any index other than the central one. Each release's archives are checksummed in the manifest, and krew checks them.
+`kubectl krew upgrade` then picks up new releases. To remove it: `kubectl krew uninstall sift` and
+`kubectl krew index remove kubesift`.
+
+Any single release can also be installed straight from its manifest, without adding the index:
 
 ```bash
 kubectl krew install --manifest-url=https://github.com/OpeyemiAdeniji/KubeSift/releases/latest/download/sift.yaml
 ```
 
-## Maintainers: getting into the krew index
+## Maintainers: how the index is kept up to date
 
-The release workflow attaches `sift.yaml` (the krew manifest, with each archive's URL and SHA-256) to every
-GitHub release.
+A krew index is a git repository with a `plugins/` folder; krew reads it from the default branch. The release
+workflow builds `sift.yaml` (each archive's URL and SHA-256), attaches it to the GitHub release and copies it to
+`plugins/sift.yaml` on `main`, so the index always points at the newest release. It never moves backwards: releasing
+an older patch line leaves the index alone.
 
-1. Fork [kubernetes-sigs/krew-index](https://github.com/kubernetes-sigs/krew-index).
-2. Copy the release's `sift.yaml` to `plugins/sift.yaml` in the fork.
-3. Test it locally: `kubectl krew install --manifest=plugins/sift.yaml`, then `kubectl sift version`.
-4. Open a pull request titled "Add sift plugin". The krew maintainers review the name and description against the
-   [plugin naming guide](https://krew.sigs.k8s.io/docs/developer-guide/develop/naming-guide/) and may ask for
-   changes.
-5. After it is merged, later releases can be proposed automatically by
-   [krew-release-bot](https://github.com/rajatjindal/krew-release-bot) (add its step to the release workflow).
+`tests/test_krew_manifest.py` checks that `plugins/sift.yaml` keeps krew's rules (a tagline of 50 characters or
+fewer, no usage text in the description or caveats, all five platforms).
+
+KubeSift is not in the central krew index (kubernetes-sigs/krew-index); it uses its own index as above.

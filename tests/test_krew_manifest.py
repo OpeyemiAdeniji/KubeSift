@@ -33,3 +33,15 @@ def test_no_usage_strings(tmp_path):
 def test_every_platform_has_a_quoted_sha(tmp_path):
     platforms = manifest(tmp_path)["spec"]["platforms"]
     assert len(platforms) == 5 and all(isinstance(p["sha256"], str) and len(p["sha256"]) == 64 for p in platforms)
+
+
+def test_the_index_manifest_keeps_krew_rules():
+    """plugins/sift.yaml is KubeSift's own krew index (`kubectl krew index add kubesift <repo>`)."""
+    spec = yaml.safe_load((ROOT / "plugins" / "sift.yaml").read_text(encoding="utf-8"))["spec"]
+    assert len(spec["shortDescription"]) <= 50
+    assert "kubectl sift" not in spec["description"] + spec["caveats"]
+    version = spec["version"]
+    assert len(spec["platforms"]) == 5
+    for p in spec["platforms"]:
+        assert f"/releases/download/{version}/" in p["uri"], p["uri"]  # every archive is from the same release
+        assert isinstance(p["sha256"], str) and len(p["sha256"]) == 64
